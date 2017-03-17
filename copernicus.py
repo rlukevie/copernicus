@@ -45,7 +45,7 @@ queries = [{'q': 'beginposition:[NOW-10MONTHS TO NOW] AND\
                            cloudcoverpercentage:[0 TO 10]',
             'rows': '10'}]  # Pyongyang
 
-# ================================================================================
+# =============================================================================
 
 if verbose:
     log_name_out = 'copernicus_out_' + \
@@ -86,14 +86,16 @@ for query in queries:
     # print(cf.translate_l1c_to_l2a_title(product_to_download))
 
     if cf.product_already_downloaded(product_to_download):
-        cf.write_download_log('Selected product already downloaded: {} | {}'.format(product_to_download[0],
-                                                                                    product_to_download[1]))
+        cf.write_download_log(
+            'Selected product already downloaded: {} | {}'.format(
+                product_to_download[0], product_to_download[1]))
     else:
         if cf.proceed_with_download(product_to_download):
             cf.download_product(product_to_download)
             cf.write_product_to_downloaded(product_to_download)
             cf.unzip_downloaded_product(product_to_download)
             cf.process_l1c_to_l2a(product_to_download)
-            cf.write_product_to_analyze(cf.translate_l1c_to_l2a_title(product_to_download))
+            cf.write_product_to_analyze(
+                cf.translate_l1c_to_l2a_title(product_to_download))
 
 cf.write_download_log('Finished copernicus.py')
