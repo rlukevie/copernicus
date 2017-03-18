@@ -35,7 +35,7 @@ if configuration.get("logging", "log_output") == "True":
     sys.stdout = open(os.path.join(log_directory, log_name_out), 'a')
     sys.stderr = open(os.path.join(log_directory, log_name_err), 'a')
 
-# reset shelves?
+# reset product shelves?
 if configuration.get("debugging", "reset_downloadshelve") == "True":
     cf.reset_downloadshelve()
 if configuration.get("debugging", "reset_analyzeshelve") == "True":
