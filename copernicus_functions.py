@@ -14,13 +14,18 @@ import time
 import ConfigParser
 
 # SETTINGS
+# Credentials
 credentials = ConfigParser.ConfigParser()
 credentials.read("./config/credentials.cfg")
 opendatahub_user = credentials.get("opendatahub", "user")
 opendatahub_password = credentials.get("opendatahub", "pw")
 email_user = credentials.get("email", "user")
 email_password = credentials.get("email", "pw")
-basedir = '/home/roland/copernicus'
+
+# Directories
+configuration = ConfigParser.ConfigParser()
+configuration.read("./config/conf.cfg")
+basedir = configuration.get("directories", "basedir")
 download_dir = os.path.join(basedir, 'downloads')
 SAFE_dir = os.path.join(basedir, 'SAFE')
 log_dir = os.path.join(basedir, 'log')
