@@ -25,12 +25,12 @@ email_password = credentials.get("email", "pw")
 # Directories
 configuration = ConfigParser.ConfigParser()
 configuration.read("./config/conf.cfg")
-basedir = configuration.get("directories", "basedir")
-download_dir = os.path.join(basedir, 'downloads')
-SAFE_dir = os.path.join(basedir, 'SAFE')
-log_dir = os.path.join(basedir, 'log')
-etc_dir = os.path.join(basedir, 'etc')
-img_dir = os.path.join(basedir, 'img')
+base_directory = configuration.get("directories", "base_directory")
+product_download_directory = os.path.join(base_directory, 'downloads')
+product_data_directory = os.path.join(base_directory, 'SAFE')
+log_directory = os.path.join(base_directory, 'log')
+shelve_directory = os.path.join(base_directory, 'etc')
+image_output_directory = os.path.join(base_directory, 'img')
 
 
 # ===================================================================
@@ -71,16 +71,16 @@ def parse_osearch_response(response):
 
 def write_log(logentry, logfile):
     entrytime = datetime.datetime.now().isoformat()[:-7]
-    with open(os.path.join(log_dir, logfile), 'a') as f:
+    with open(os.path.join(log_directory, logfile), 'a') as f:
         f.write('{:s} {:s}\n'.format(entrytime, logentry))
 
 
 def write_download_log(logentry):
-    write_log(logentry, os.path.join(log_dir, 'download.log'))
+    write_log(logentry, os.path.join(log_directory, 'download.log'))
 
 
 def write_analysis_log(logentry):
-    write_log(logentry, os.path.join(log_dir, 'analysis.log'))
+    write_log(logentry, os.path.join(log_directory, 'analysis.log'))
 
 
 # ===================================================================
@@ -130,7 +130,7 @@ def proceed_with_download(product):
 
 def download_product(product):
     filename = product[1] + '.zip'
-    path = os.path.join(download_dir, filename)
+    path = os.path.join(product_download_directory, filename)
     write_download_log(
         'Requesting download for: {} | {}'.format(product[0], product[1]))
 
@@ -155,8 +155,8 @@ def unzip_downloaded_product(product):
     write_download_log(
         'Starting Unzip for: {} | {}'.format(product[0], product[1]))
     file_to_extract = product[1] + '.zip'
-    extract_from_path = os.path.join(download_dir, file_to_extract)
-    extract_to_path = SAFE_dir
+    extract_from_path = os.path.join(product_download_directory, file_to_extract)
+    extract_to_path = product_data_directory
     safezip = zipfile.ZipFile(extract_from_path)
     safezip.extractall(extract_to_path)
     safezip.close()
@@ -168,10 +168,10 @@ def process_l1c_to_l2a(product):
     log_name = 'copernicus_process_l1c_to_l2a_' + \
         time.strftime('%Y-%m-%d__%H_%M_%S') + '.log'
     saveout = sys.stdout
-    sys.stdout = open(os.path.join(log_dir, log_name), 'w')
+    sys.stdout = open(os.path.join(log_directory, log_name), 'w')
 
     filename = product[1] + '.SAFE'
-    l1c_path = os.path.join(SAFE_dir, filename)
+    l1c_path = os.path.join(product_data_directory, filename)
     write_download_log(
         'Starting L2A_Process for: {} | {}'.format(product[0], l1c_path))
     os.system('L2A_Process ' + l1c_path)
@@ -186,7 +186,7 @@ def process_l1c_to_l2a(product):
 
 
 def product_already_downloaded(product):
-    sf = shelve.open(os.path.join(etc_dir, 'downloaded_products'))
+    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
     if product[0] in sf.keys():
         sf.close()
         return True
@@ -196,14 +196,14 @@ def product_already_downloaded(product):
 
 
 def reset_downloadshelve():
-    sf = shelve.open(os.path.join(etc_dir, 'downloaded_products'))
+    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
     sf.clear()
     sf.close()
     write_download_log('Reset downloadshelve')
 
 
 def write_product_to_downloaded(product):
-    sf = shelve.open(os.path.join(etc_dir, 'downloaded_products'))
+    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
     sf[product[0]] = product  # oder product[1:]???
     sf.close()
     write_download_log(
@@ -213,13 +213,13 @@ def write_product_to_downloaded(product):
 
 
 def ids_in_downloaded_shelve():
-    sf = shelve.open(os.path.join(etc_dir, 'downloaded_products'))
+    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
     ids = sf.keys()
     return ids
 
 
 def products_in_shelve():
-    sf = shelve.open(os.path.join(etc_dir, 'downloaded_products'))
+    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
     products = sf.values()
     return products
 
@@ -233,7 +233,7 @@ def print_products_in_shelve():
 
 
 def write_product_to_analyze(product):
-    sf = shelve.open(os.path.join(etc_dir, 'products_to_analyze'))
+    sf = shelve.open(os.path.join(shelve_directory, 'products_to_analyze'))
     sf[product[0]] = product
     sf.close()
     write_download_log(
@@ -242,7 +242,7 @@ def write_product_to_analyze(product):
 
 
 def read_products_to_analyze():
-    sf = shelve.open(os.path.join(etc_dir, 'products_to_analyze'))
+    sf = shelve.open(os.path.join(shelve_directory, 'products_to_analyze'))
     productsreturn = {}
     for productkey in sf.keys():
         productsreturn[productkey] = sf[productkey]
@@ -255,17 +255,17 @@ def print_products_to_analyze():
 
 
 def remove_from_analyzeshelve(product):
-    sf = shelve.open(os.path.join(etc_dir, 'products_to_analyze'))
+    sf = shelve.open(os.path.join(shelve_directory, 'products_to_analyze'))
     print(sf.pop(product[0], False))
     sf.close()
-    sf = shelve.open(os.path.join(etc_dir, 'products_to_analyze'))
+    sf = shelve.open(os.path.join(shelve_directory, 'products_to_analyze'))
     print('sf: {}'.format(sf))
     sf.close()
     write_analysis_log('Removed from analyzeshelve: {}'.format(product[0]))
 
 
 def reset_analyzeshelve():
-    sf = shelve.open(os.path.join(etc_dir, 'products_to_analyze'))
+    sf = shelve.open(os.path.join(shelve_directory, 'products_to_analyze'))
     sf.clear()
     sf.close()
     write_analysis_log('Reset analyzeshelve')
@@ -275,7 +275,7 @@ def reset_analyzeshelve():
 # Product Analyzed Shelve
 
 def write_product_analyzed(product):
-    sf = shelve.open(os.path.join(etc_dir, 'products_analyzed'))
+    sf = shelve.open(os.path.join(shelve_directory, 'products_analyzed'))
     sf[product[0]] = product
     sf.close()
     write_analysis_log(
@@ -283,12 +283,12 @@ def write_product_analyzed(product):
 
 
 def read_products_analyzed():
-    sf = shelve.open(os.path.join(etc_dir, 'products_analyzed'))
+    sf = shelve.open(os.path.join(shelve_directory, 'products_analyzed'))
     return sf
 
 
 def reset_analyzedshelve():
-    sf = shelve.open(os.path.join(etc_dir, 'products_analyzed'))
+    sf = shelve.open(os.path.join(shelve_directory, 'products_analyzed'))
     sf.clear()
     sf.close()
     write_analysis_log('Reset analyzedshelve')
@@ -298,7 +298,7 @@ def reset_analyzedshelve():
 
 
 def send_analyzed_mail_with_thumbnail(product):
-    thumb_path = os.path.join(img_dir, product[1] + '_RGB_thumb.jpg')
+    thumb_path = os.path.join(image_output_directory, product[1] + '_RGB_thumb.jpg')
     msg = MIMEMultipart()
     msg['Subject'] = 'Thumbnail created: ' + product[1]
     msg['From'] = 'Copernicus Analysator <r.lukesch@gmx.net>'

@@ -4,31 +4,37 @@ import os
 import re
 import sys
 import time
+import ConfigParser
 
 
 # SETTINGS
-basedir = '/home/roland/copernicus'
-download_dir = os.path.join(basedir, 'downloads')
-SAFE_dir = os.path.join(basedir, 'SAFE')
-log_dir = os.path.join(basedir, 'log')
-etc_dir = os.path.join(basedir, 'etc')
-img_dir = os.path.join(basedir, 'img')
 
-verbose = True
+# Directories
+configuration = ConfigParser.ConfigParser()
+configuration.read("./config/conf.cfg")
+base_directory = configuration.get("directories", "base_directory")
+product_download_directory = os.path.join(base_directory, 'downloads')
+product_data_directory = os.path.join(base_directory, 'SAFE')
+log_directory = os.path.join(base_directory, 'log')
+shelve_directory = os.path.join(base_directory, 'etc')
+image_output_directory = os.path.join(base_directory, 'img')
+
+verbose = False
 
 
 def get_image_dir(product_title, pixel_size, band_name):
     pixel_size_path = 'R' + str(pixel_size) + 'm'
     granule_dir = os.listdir(
-        os.path.join(SAFE_dir, product_title + '.SAFE', 'GRANULE'))[0]
+        os.path.join(product_data_directory, product_title + '.SAFE',
+                     'GRANULE'))[0]
     images = os.listdir(
         os.path.join(
-            SAFE_dir, product_title + '.SAFE', 'GRANULE',
+            product_data_directory, product_title + '.SAFE', 'GRANULE',
             granule_dir, 'IMG_DATA', pixel_size_path))
     regex = re.compile(".*(_" + band_name + "_).*")
     image_name = [m.group(0) for l in images for m in [regex.search(
         l)] if m][0]
-    return os.path.join(SAFE_dir,
+    return os.path.join(product_data_directory,
                         product_title + '.SAFE',
                         'GRANULE',
                         granule_dir,
@@ -37,8 +43,8 @@ def get_image_dir(product_title, pixel_size, band_name):
                         image_name)
 
 
-def get_image_size(img_dir):
-    raster = gdal.Open(img_dir)
+def get_image_size(image_output_directory):
+    raster = gdal.Open(image_output_directory)
     print(raster.RasterXSize)
 
 
@@ -63,12 +69,12 @@ if verbose:
         '%Y-%m-%d__%H_%M_%S') + '.log'
     log_name_err = 'copernicus_analysis_err_' + time.strftime(
         '%Y-%m-%d__%H_%M_%S') + '.log'
-    sys.stdout = open(os.path.join(log_dir, log_name_out), 'a')
-    sys.stderr = open(os.path.join(log_dir, log_name_err), 'a')
+    sys.stdout = open(os.path.join(log_directory, log_name_out), 'a')
+    sys.stderr = open(os.path.join(log_directory, log_name_err), 'a')
 
 products_to_analyze = cf.read_products_to_analyze()
 
-# print('\ncf.read_products_to_analyze(): {}\n'.format(products_to_analyze))
+print('\ncf.read_products_to_analyze(): {}\n'.format(products_to_analyze))
 
 cf.write_analysis_log('Started copernicus_analysis.py')
 
@@ -77,9 +83,9 @@ for product in products_to_analyze:
     g_dir = get_image_dir(products_to_analyze[product][1], 10, 'B03')
     b_dir = get_image_dir(products_to_analyze[product][1], 10, 'B02')
     rgb_dir = os.path.join(
-        img_dir, products_to_analyze[product][1] + '_RGB.tif')
+        image_output_directory, products_to_analyze[product][1] + '_RGB.tif')
     thumb_dir = os.path.join(
-        img_dir, products_to_analyze[product][1] + '_RGB_thumb.jpg')
+        image_output_directory, products_to_analyze[product][1] + '_RGB_thumb.jpg')
 
     merge_bands_to_rgb(r_dir, g_dir, b_dir, rgb_dir)
     cf.write_analysis_log('Completed merge to RGB: ' + rgb_dir)

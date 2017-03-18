@@ -3,14 +3,19 @@ import pprint
 import sys
 import os
 import time
+import ConfigParser
 
 # SETTINGS
-basedir = '/home/roland/copernicus'
-# download_dir = os.path.join(basedir, 'downloads')
-# SAFE_dir = os.path.join(basedir, 'SAFE')
-log_dir = os.path.join(basedir, 'log')
-# etc_dir = os.path.join(basedir, 'etc')
-# img_dir = os.path.join(basedir, 'img')
+
+# Directories
+configuration = ConfigParser.ConfigParser()
+configuration.read("./config/conf.cfg")
+base_directory = configuration.get("directories", "base_directory")
+product_download_directory = os.path.join(base_directory, 'downloads')
+product_data_directory = os.path.join(base_directory, 'SAFE')
+log_directory = os.path.join(base_directory, 'log')
+shelve_directory = os.path.join(base_directory, 'etc')
+image_output_directory = os.path.join(base_directory, 'img')
 
 verbose = True
 
@@ -52,8 +57,8 @@ if verbose:
         time.strftime('%Y-%m-%d__%H_%M_%S') + '.log'
     log_name_err = 'copernicus_err_' + \
         time.strftime('%Y-%m-%d__%H_%M_%S') + '.log'
-    sys.stdout = open(os.path.join(log_dir, log_name_out), 'a')
-    sys.stderr = open(os.path.join(log_dir, log_name_err), 'a')
+    sys.stdout = open(os.path.join(log_directory, log_name_out), 'a')
+    sys.stderr = open(os.path.join(log_directory, log_name_err), 'a')
 
 # cf.reset_downloadshelve()
 # cf.reset_analyzeshelve()
