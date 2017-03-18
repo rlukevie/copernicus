@@ -1,4 +1,3 @@
-import datetime
 import os
 import shelve
 import smtplib
@@ -12,8 +11,12 @@ import zipfile
 import pprint
 import time
 import ConfigParser
+import logging
 
-# SETTINGS
+###############################################################################
+# SETTINGS                                                                    #
+###############################################################################
+
 # Credentials
 credentials = ConfigParser.ConfigParser()
 credentials.read("./config/credentials.cfg")
@@ -32,12 +35,21 @@ log_directory = os.path.join(base_directory, 'log')
 shelve_directory = os.path.join(base_directory, 'etc')
 image_output_directory = os.path.join(base_directory, 'img')
 
+# Logging
+standard_logfile = configuration.get("logging", "file")
+standard_logpath = os.path.join(log_directory, standard_logfile)
+logging.basicConfig(
+    filename=standard_logpath,
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)8s] %(message)s",
+    datefmt="%d.%m.%Y %H:%M:%S")
+
 
 # ===================================================================
 # SEARCHING
 
 def osearch(query):
-    write_download_log('Opensearch Query: {}'.format(query))
+    logging.info('Opensearch Query: {}'.format(query))
     response = requests.get(
         "https://scihub.copernicus.eu/apihub/search",
         params=query, auth=(opendatahub_user, opendatahub_password))
@@ -67,23 +79,6 @@ def parse_osearch_response(response):
 
 
 # ===================================================================
-# LOGGING
-
-def write_log(logentry, logfile):
-    entrytime = datetime.datetime.now().isoformat()[:-7]
-    with open(os.path.join(log_directory, logfile), 'a') as f:
-        f.write('{:s} {:s}\n'.format(entrytime, logentry))
-
-
-def write_download_log(logentry):
-    write_log(logentry, os.path.join(log_directory, 'download.log'))
-
-
-def write_analysis_log(logentry):
-    write_log(logentry, os.path.join(log_directory, 'analysis.log'))
-
-
-# ===================================================================
 # VARIOUS HELPERS
 
 def translate_l1c_to_l2a_title(product):
@@ -94,16 +89,17 @@ def translate_l1c_to_l2a_title(product):
 
 def list_products(parsed_response):
     i = 0
-    print('\nLIST PRODUCTS\nTotal: ' +
-          str(len(parsed_response)) + '\n' + 13 * '=')
+    logging.debug('\nLIST PRODUCTS\nTotal: ' +
+                  str(len(parsed_response)) + '\n' + 13 * '=')
     for p in parsed_response:
         i += 1
-        print("{:03d}: {:s} --> {:10s} {:10s} {:s}".format(i,
-                                                           p[0][:4] + '..' +
-                                                           p[0][-4:],
-                                                           p[3],
-                                                           p[2][:10],
-                                                           p[1]))
+        logging.debug(
+            "{:03d}: {:s} --> {:10s} {:10s} {:s}".format(i,
+                                                         p[0][:4] + '..' +
+                                                         p[0][-4:],
+                                                         p[3],
+                                                         p[2][:10],
+                                                         p[1]))
 
 
 # ===================================================================
@@ -131,7 +127,7 @@ def proceed_with_download(product):
 def download_product(product):
     filename = product[1] + '.zip'
     path = os.path.join(product_download_directory, filename)
-    write_download_log(
+    logging.info(
         'Requesting download for: {} | {}'.format(product[0], product[1]))
 
     r = requests.get(
@@ -141,26 +137,27 @@ def download_product(product):
         stream=True)
 
     if r.status_code == 200:
-        write_download_log(
+        logging.info(
             'Starting download for: {} | {}'.format(product[0], product[1]))
         with open(path, 'wb') as f:
             for chunk in r.iter_content(1024):
                 f.write(chunk)
-    write_download_log(
+    logging.info(
         'Product download complete for: {} | {}'.format(
             product[0], product[1]))
 
 
 def unzip_downloaded_product(product):
-    write_download_log(
+    logging.info(
         'Starting Unzip for: {} | {}'.format(product[0], product[1]))
     file_to_extract = product[1] + '.zip'
-    extract_from_path = os.path.join(product_download_directory, file_to_extract)
+    extract_from_path = os.path.join(product_download_directory,
+                                     file_to_extract)
     extract_to_path = product_data_directory
     safezip = zipfile.ZipFile(extract_from_path)
     safezip.extractall(extract_to_path)
     safezip.close()
-    write_download_log(
+    logging.info(
         'Completed Unzip for: {} | {}'.format(product[0], product[1]))
 
 
@@ -172,10 +169,10 @@ def process_l1c_to_l2a(product):
 
     filename = product[1] + '.SAFE'
     l1c_path = os.path.join(product_data_directory, filename)
-    write_download_log(
+    logging.info(
         'Starting L2A_Process for: {} | {}'.format(product[0], l1c_path))
     os.system('L2A_Process ' + l1c_path)
-    write_download_log(
+    logging.info(
         'Completed L2A_Process for: {} | {}'.format(product[0], l1c_path))
 
     sys.stdout = saveout
@@ -199,14 +196,14 @@ def reset_downloadshelve():
     sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
     sf.clear()
     sf.close()
-    write_download_log('Reset downloadshelve')
+    logging.info('Reset downloadshelve')
 
 
 def write_product_to_downloaded(product):
     sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
     sf[product[0]] = product  # oder product[1:]???
     sf.close()
-    write_download_log(
+    logging.info(
         'Product written to shelve "downloaded_products": {}'.format(
             product[0]))
     return
@@ -236,7 +233,7 @@ def write_product_to_analyze(product):
     sf = shelve.open(os.path.join(shelve_directory, 'products_to_analyze'))
     sf[product[0]] = product
     sf.close()
-    write_download_log(
+    logging.info(
         'Product written to shelve "products_to_analyze": {}'.format(
             product[0]))
 
@@ -261,14 +258,14 @@ def remove_from_analyzeshelve(product):
     sf = shelve.open(os.path.join(shelve_directory, 'products_to_analyze'))
     print('sf: {}'.format(sf))
     sf.close()
-    write_analysis_log('Removed from analyzeshelve: {}'.format(product[0]))
+    logging.info('Removed from analyzeshelve: {}'.format(product[0]))
 
 
 def reset_analyzeshelve():
     sf = shelve.open(os.path.join(shelve_directory, 'products_to_analyze'))
     sf.clear()
     sf.close()
-    write_analysis_log('Reset analyzeshelve')
+    logging.info('Reset analyzeshelve')
 
 
 # ===================================================================
@@ -278,7 +275,7 @@ def write_product_analyzed(product):
     sf = shelve.open(os.path.join(shelve_directory, 'products_analyzed'))
     sf[product[0]] = product
     sf.close()
-    write_analysis_log(
+    logging.info(
         'Product written to shelve "products_analyzed": {}'.format(product[0]))
 
 
@@ -291,14 +288,15 @@ def reset_analyzedshelve():
     sf = shelve.open(os.path.join(shelve_directory, 'products_analyzed'))
     sf.clear()
     sf.close()
-    write_analysis_log('Reset analyzedshelve')
+    logging.info('Reset analyzedshelve')
 
 # ===================================================================
 # Send Mails
 
 
 def send_analyzed_mail_with_thumbnail(product):
-    thumb_path = os.path.join(image_output_directory, product[1] + '_RGB_thumb.jpg')
+    thumb_path = os.path.join(image_output_directory,
+                              product[1] + '_RGB_thumb.jpg')
     msg = MIMEMultipart()
     msg['Subject'] = 'Thumbnail created: ' + product[1]
     msg['From'] = 'Copernicus Analysator <r.lukesch@gmx.net>'
@@ -316,5 +314,5 @@ def send_analyzed_mail_with_thumbnail(product):
                   'Roland Lukesch <r.lukesch@gmx.net>', msg.as_string())
     smtp.quit()
 
-    write_analysis_log(
+    logging.info(
         'Sent Thumbnail Mail to r.lukesch@gmx.net: {}'.format(thumb_path))
