@@ -16,3 +16,5 @@ No real analysis implemented yet, only:
 
 ### functions.py
 Most of the functions in use can be found here.
+
+### config/conf.cfg
