@@ -1,4 +1,4 @@
-import copernicus_functions as cf
+import functions as cf
 import pprint
 import sys
 import os
@@ -10,7 +10,7 @@ import ConfigParser
 # Directories
 configuration = ConfigParser.ConfigParser()
 configuration.read("./config/conf.cfg")
-base_directory = configuration.get("directories", "base_directory")
+base_directory = configuration.get("directories", "base")
 product_download_directory = os.path.join(base_directory, 'downloads')
 product_data_directory = os.path.join(base_directory, 'SAFE')
 log_directory = os.path.join(base_directory, 'log')

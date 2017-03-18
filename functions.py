@@ -25,7 +25,7 @@ email_password = credentials.get("email", "pw")
 # Directories
 configuration = ConfigParser.ConfigParser()
 configuration.read("./config/conf.cfg")
-base_directory = configuration.get("directories", "base_directory")
+base_directory = configuration.get("directories", "base")
 product_download_directory = os.path.join(base_directory, 'downloads')
 product_data_directory = os.path.join(base_directory, 'SAFE')
 log_directory = os.path.join(base_directory, 'log')
