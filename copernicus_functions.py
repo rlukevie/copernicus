@@ -16,8 +16,10 @@ import ConfigParser
 # SETTINGS
 credentials = ConfigParser.ConfigParser()
 credentials.read("./config/credentials.cfg")
-user = credentials.get("opendatahub", "user")
-pw = credentials.get("opendatahub", "pw")
+opendatahub_user = credentials.get("opendatahub", "user")
+opendatahub_password = credentials.get("opendatahub", "pw")
+email_user = credentials.get("email", "user")
+email_password = credentials.get("email", "pw")
 basedir = '/home/roland/copernicus'
 download_dir = os.path.join(basedir, 'downloads')
 SAFE_dir = os.path.join(basedir, 'SAFE')
@@ -33,7 +35,7 @@ def osearch(query):
     write_download_log('Opensearch Query: {}'.format(query))
     response = requests.get(
         "https://scihub.copernicus.eu/apihub/search",
-        params=query, auth=(user, pw))
+        params=query, auth=(opendatahub_user, opendatahub_password))
     return response
 
 
@@ -130,7 +132,7 @@ def download_product(product):
     r = requests.get(
         "https://scihub.copernicus.eu/dhus/odata/v1/Products('" +
         product[0] + "')/$value",
-        auth=(user, pw),
+        auth=(opendatahub_user, opendatahub_password),
         stream=True)
 
     if r.status_code == 200:
@@ -304,7 +306,7 @@ def send_analyzed_mail_with_thumbnail(product):
     msg.attach(bild)
 
     smtp = smtplib.SMTP_SSL("mail.gmx.com:465")
-    smtp.login("r.lukesch@gmx.net", "EOh12TzS")
+    smtp.login(email_user, email_password)
     smtp.sendmail('Copernicus <r.lukesch@gmx.net>',
                   'Roland Lukesch <r.lukesch@gmx.net>', msg.as_string())
     smtp.quit()
