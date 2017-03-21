@@ -1,6 +1,8 @@
+cache/
 *.pyc
 test.py
 downloads/
+etc/
 img/
 SAFE/
 config/credentials.cfg

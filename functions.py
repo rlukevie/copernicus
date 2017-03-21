@@ -40,7 +40,7 @@ standard_logfile = configuration.get("logging", "file")
 standard_logpath = os.path.join(log_directory, standard_logfile)
 logging.basicConfig(
     filename=standard_logpath,
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)8s] %(message)s",
     datefmt="%d.%m.%Y %H:%M:%S")
 
@@ -49,7 +49,7 @@ logging.basicConfig(
 # SEARCHING
 
 def osearch(query):
-    logging.info('Opensearch Query: {}'.format(query))
+    logging.info('Opensearch request: {}'.format(query))
     response = requests.get(
         "https://scihub.copernicus.eu/apihub/search",
         params=query, auth=(opendatahub_user, opendatahub_password))
