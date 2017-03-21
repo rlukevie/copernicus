@@ -1,50 +1,12 @@
 #!/home/roland/anaconda2/envs/sen2cor/bin/python
 
-import time
-import sys
 import functions as cf
-import os
-import ConfigParser
-import logging
 
-from factorytools.request import Request, RequestQueue
+from factorytools.settings import *
+from factorytools.request import ProductSelector, SelectorQueue
 
 
 def main():
-    ###############################################################################
-    # SETTINGS                                                                    #
-    ###############################################################################
-
-    # Directories
-    configuration = ConfigParser.ConfigParser()
-    configuration.read("./config/conf.cfg")
-    base_directory = configuration.get("directories", "base")
-    product_download_directory = os.path.join(base_directory, 'downloads')
-    product_data_directory = os.path.join(base_directory, 'SAFE')
-    log_directory = os.path.join(base_directory, 'log')
-    shelve_directory = os.path.join(base_directory, 'etc')
-    image_output_directory = os.path.join(base_directory, 'img')
-
-    # verbose?
-    if configuration.get("logging", "verbose") == "True":
-        verbose = True
-    else:
-        verbose = False
-
-    # log output?
-    if configuration.get("logging", "log_output") == "True":
-        log_name_out = 'product_factory_out_' + \
-                       time.strftime('%Y-%m-%d__%H_%M_%S') + '.log'
-        log_name_err = 'product_factory_err_' + \
-                       time.strftime('%Y-%m-%d__%H_%M_%S') + '.log'
-        sys.stdout = open(os.path.join(log_directory, log_name_out), 'a')
-        sys.stderr = open(os.path.join(log_directory, log_name_err), 'a')
-
-    # reset product shelves?
-    if configuration.get("debugging", "reset_downloadshelve") == "True":
-        cf.reset_downloadshelve()
-    if configuration.get("debugging", "reset_analyzeshelve") == "True":
-        cf.reset_analyzeshelve()
 
     ###############################################################################
     # PRODUCT QUERIES                                                             #
@@ -81,16 +43,21 @@ def main():
     #                            cloudcoverpercentage:[0 TO 10]',
     #             'rows': '10'}]  # Pyongyang
 
-    wien = Request({"q": 'beginposition:[NOW-10MONTHS TO NOW] AND footprint:"Intersects('
+    wien = ProductSelector({"q": 'beginposition:[NOW-10MONTHS TO NOW] AND footprint:"Intersects('
                          '48.2000, 16.1000)" AND producttype:"S2MSI1C" AND '
                          'cloudcoverpercentage:[0 TO 10]',
                     "rows": "10"})
-    request_queue = RequestQueue()
+    request_queue = SelectorQueue()
     request_queue.append(wien)
+
+    wien.send()
+    if wien.response:
+        print(wien.response.text)
+        print(wien.response.headers)
 
     logging.info('---------- STARTED product_factory.py ----------')
 
-    for request in request_queue.requests:
+    for request in request_queue.queue:
         response = cf.osearch(request.request)
 
         if verbose:

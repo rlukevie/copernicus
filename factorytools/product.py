@@ -1,0 +1,2 @@
+class FactoryProduct:
+    pass
