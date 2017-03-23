@@ -3,7 +3,7 @@
 import functions as cf
 
 from factorytools.settings import *
-from factorytools.request import ProductSelector, SelectorQueue
+from factorytools.request import ProductSelector
 
 
 def main():
@@ -43,17 +43,25 @@ def main():
     #                            cloudcoverpercentage:[0 TO 10]',
     #             'rows': '10'}]  # Pyongyang
 
-    wien = ProductSelector({"q": 'beginposition:[NOW-10MONTHS TO NOW] AND footprint:"Intersects('
-                         '48.2000, 16.1000)" AND producttype:"S2MSI1C" AND '
-                         'cloudcoverpercentage:[0 TO 10]',
-                    "rows": "10"})
-    request_queue = SelectorQueue()
-    request_queue.append(wien)
+    wien = ProductSelector(
+        {"q": 'beginposition:[NOW-20MONTHS TO NOW] AND footprint:"Intersects('
+              '48.2000, 16.1000)" AND producttype:"S2MSI1C" AND '
+              'cloudcoverpercentage:[0 TO 10]',
+         "rows": "10"})
 
-    wien.send()
-    if wien.response:
-        print(wien.response.text)
-        print(wien.response.headers)
+    # amazonas_muendung = ProductSelector(
+    #     {"q": 'beginposition:[NOW-10MONTHS TO NOW] AND '
+    #           'footprint:"Intersects(30.300, 121.000)" AND '
+    #           'producttype:"S2MSI1C" AND '
+    #           'cloudcoverpercentage:[0 TO 0]',
+    #      "rows": "10"})
+
+
+    for instance in ProductSelector.instances:
+        instance.send()
+        instance.select()
+
+    # TODO: ab hier gibt es keine Objekte mehr!
 
     logging.info('---------- STARTED product_factory.py ----------')
 
