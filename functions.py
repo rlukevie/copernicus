@@ -48,34 +48,34 @@ logging.basicConfig(
 # ===================================================================
 # SEARCHING
 
-def osearch(query):
-    logging.info('Opensearch request: {}'.format(query))
-    response = requests.get(
-        "https://scihub.copernicus.eu/apihub/search",
-        params=query, auth=(opendatahub_user, opendatahub_password))
-    return response
+# def osearch(query):  # DONE
+#     logging.info('Opensearch request: {}'.format(query))
+#     response = requests.get(
+#         "https://scihub.copernicus.eu/apihub/search",
+#         params=query, auth=(opendatahub_user, opendatahub_password))
+#     return response
 
 
-def parse_osearch_response(response):
-    parsed_response = []
-    tree = ET.fromstring(response.text)
-    ns = {'atom': 'http://www.w3.org/2005/Atom'}
-    id_list = tree.findall("./atom:entry/atom:id", ns)
-    title_list = tree.findall("./atom:entry/atom:title", ns)
-    beginposition_list = tree.findall(
-        "./atom:entry/atom:date[@name='beginposition']", ns)
-    querytime = tree.find("./atom:updated", ns).text
-    size_list = tree.findall("./atom:entry/atom:str[@name='size']", ns)
-    producttype_list = tree.findall(
-        "./atom:entry/atom:str[@name='producttype']", ns)
-    for i in range(len(id_list)):
-        parsed_response.append([id_list[i].text,
-                                title_list[i].text,
-                                beginposition_list[i].text,
-                                size_list[i].text,
-                                producttype_list[i].text,
-                                querytime])
-    return sorted(parsed_response, key=lambda x: x[2], reverse=True)
+# def parse_osearch_response(response):  # DONE
+#     parsed_response = []
+#     tree = ET.fromstring(response.text)
+#     ns = {'atom': 'http://www.w3.org/2005/Atom'}
+#     id_list = tree.findall("./atom:entry/atom:id", ns)
+#     title_list = tree.findall("./atom:entry/atom:title", ns)
+#     beginposition_list = tree.findall(
+#         "./atom:entry/atom:date[@name='beginposition']", ns)
+#     querytime = tree.find("./atom:updated", ns).text
+#     size_list = tree.findall("./atom:entry/atom:str[@name='size']", ns)
+#     producttype_list = tree.findall(
+#         "./atom:entry/atom:str[@name='producttype']", ns)
+#     for i in range(len(id_list)):
+#         parsed_response.append([id_list[i].text,
+#                                 title_list[i].text,
+#                                 beginposition_list[i].text,
+#                                 size_list[i].text,
+#                                 producttype_list[i].text,
+#                                 querytime])
+#     return sorted(parsed_response, key=lambda x: x[2], reverse=True)
 
 
 # ===================================================================
@@ -105,60 +105,60 @@ def list_products(parsed_response):
 # ===================================================================
 # DOWNLOADING ETC
 
-def select_product_to_download(parsed_response):
-    # einfacher Fall: nur das erste Produkt selektieren:
-    return parsed_response[0]
+# def select_product_to_download(parsed_response):  # DONE
+#     # einfacher Fall: nur das erste Produkt selektieren:
+#     return parsed_response[0]
 
 
-def proceed_with_download(product):
-    return True  # Batch-Modus
-    print('\nProduct to Download:')
-    pprint.pprint(product)
-    inputstr = ''
-    while inputstr not in ['y', 'n']:
-        inputstr = raw_input('Proceed? (y/n)')
-        if inputstr == 'y':
-            return True
-        if inputstr == 'n':
-            return False
-        print('Enter "y" or "n"')
+# def proceed_with_download(product):
+#     return True  # Batch-Modus
+#     print('\nProduct to Download:')
+#     pprint.pprint(product)
+#     inputstr = ''
+#     while inputstr not in ['y', 'n']:
+#         inputstr = raw_input('Proceed? (y/n)')
+#         if inputstr == 'y':
+#             return True
+#         if inputstr == 'n':
+#             return False
+#         print('Enter "y" or "n"')
 
 
-def download_product(product):
-    filename = product[1] + '.zip'
-    path = os.path.join(product_download_directory, filename)
-    logging.info(
-        'Requesting download for: {} | {}'.format(product[0], product[1]))
+# def download_product(product):  # DONE
+#     filename = product[1] + '.zip'
+#     path = os.path.join(product_download_directory, filename)
+#     logging.info(
+#         'Requesting download for: {} | {}'.format(product[0], product[1]))
+#
+#     r = requests.get(
+#         "https://scihub.copernicus.eu/dhus/odata/v1/Products('" +
+#         product[0] + "')/$value",
+#         auth=(opendatahub_user, opendatahub_password),
+#         stream=True)
+#
+#     if r.status_code == 200:
+#         logging.info(
+#             'Starting download for: {} | {}'.format(product[0], product[1]))
+#         with open(path, 'wb') as f:
+#             for chunk in r.iter_content(1024):
+#                 f.write(chunk)
+#     logging.info(
+#         'Product download complete for: {} | {}'.format(
+#             product[0], product[1]))
 
-    r = requests.get(
-        "https://scihub.copernicus.eu/dhus/odata/v1/Products('" +
-        product[0] + "')/$value",
-        auth=(opendatahub_user, opendatahub_password),
-        stream=True)
 
-    if r.status_code == 200:
-        logging.info(
-            'Starting download for: {} | {}'.format(product[0], product[1]))
-        with open(path, 'wb') as f:
-            for chunk in r.iter_content(1024):
-                f.write(chunk)
-    logging.info(
-        'Product download complete for: {} | {}'.format(
-            product[0], product[1]))
-
-
-def unzip_downloaded_product(product):
-    logging.info(
-        'Starting Unzip for: {} | {}'.format(product[0], product[1]))
-    file_to_extract = product[1] + '.zip'
-    extract_from_path = os.path.join(product_download_directory,
-                                     file_to_extract)
-    extract_to_path = product_data_directory
-    safezip = zipfile.ZipFile(extract_from_path)
-    safezip.extractall(extract_to_path)
-    safezip.close()
-    logging.info(
-        'Completed Unzip for: {} | {}'.format(product[0], product[1]))
+# def unzip_downloaded_product(product):  # DONE
+#     logging.info(
+#         'Starting Unzip for: {} | {}'.format(product[0], product[1]))
+#     file_to_extract = product[1] + '.zip'
+#     extract_from_path = os.path.join(product_download_directory,
+#                                      file_to_extract)
+#     extract_to_path = product_data_directory
+#     safezip = zipfile.ZipFile(extract_from_path)
+#     safezip.extractall(extract_to_path)
+#     safezip.close()
+#     logging.info(
+#         'Completed Unzip for: {} | {}'.format(product[0], product[1]))
 
 
 def process_l1c_to_l2a(product):
@@ -182,47 +182,47 @@ def process_l1c_to_l2a(product):
 # Product Downloaded Shelve
 
 
-def product_already_downloaded(product):
-    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
-    if product[0] in sf.keys():
-        sf.close()
-        return True
-    else:
-        sf.close()
-        return False
+# def product_already_downloaded(product):  # DONE
+#     sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
+#     if product[0] in sf.keys():
+#         sf.close()
+#         return True
+#     else:
+#         sf.close()
+#         return False
 
 
-def reset_downloadshelve():
-    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
-    sf.clear()
-    sf.close()
-    logging.info('Reset downloadshelve')
+# def reset_downloadshelve():  # DONE
+#     sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
+#     sf.clear()
+#     sf.close()
+#     logging.info('Reset downloadshelve')
 
 
-def write_product_to_downloaded(product):
-    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
-    sf[product[0]] = product  # oder product[1:]???
-    sf.close()
-    logging.info(
-        'Product written to shelve "downloaded_products": {}'.format(
-            product[0]))
-    return
+# def write_product_to_downloaded(product):  # DONE
+#     sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
+#     sf[product[0]] = product  # oder product[1:]???
+#     sf.close()
+#     logging.info(
+#         'Product written to shelve "downloaded_products": {}'.format(
+#             product[0]))
+#     return
 
 
-def ids_in_downloaded_shelve():
-    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
-    ids = sf.keys()
-    return ids
+# def ids_in_downloaded_shelve():
+#     sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
+#     ids = sf.keys()
+#     return ids
 
 
-def products_in_shelve():
-    sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
-    products = sf.values()
-    return products
+# def products_in_shelve():
+#     sf = shelve.open(os.path.join(shelve_directory, 'downloaded_products'))
+#     products = sf.values()
+#     return products
 
 
-def print_products_in_shelve():
-    print(products_in_shelve())
+# def print_products_in_shelve():
+#     print(products_in_shelve())
 
 
 # ===================================================================
