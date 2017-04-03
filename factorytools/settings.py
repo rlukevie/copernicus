@@ -24,6 +24,9 @@ log_directory = os.path.join(base_directory, 'log')
 shelve_directory = os.path.join(base_directory, 'etc')
 image_output_directory = os.path.join(base_directory, 'img')
 
+# Shelve Names
+downloaded_products_shelve = 'downloaded_products'
+
 # Open Data Hub
 open_data_hub_url = configuration.get("opendatahub", "url")
 
@@ -44,15 +47,19 @@ if configuration.get("logging", "log_output") == "True":
 
 # reset product shelves?
 if configuration.get("debugging", "reset_downloadshelve") == "True":
-    cf.reset_downloadshelve()
+    downloaded_products_shelve_to_reset = True
+else:
+    downloaded_products_shelve_to_reset = False
 if configuration.get("debugging", "reset_analyzeshelve") == "True":
-    cf.reset_analyzeshelve()
+    products_to_analyze_shelve_to_reset = True
+else:
+    products_to_analyze_shelve_to_reset = False
 
 # Logging
 standard_logfile = configuration.get("logging", "file")
 standard_logpath = os.path.join(log_directory, standard_logfile)
 logging.basicConfig(
     filename=standard_logpath,
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)8s] %(message)s",
     datefmt="%d.%m.%Y %H:%M:%S")
