@@ -1,5 +1,5 @@
 import requests
-import xml.etree.cElementTree as ET
+import xml.etree.ElementTree as ET
 
 from factorytools.settings import *
 
@@ -21,20 +21,21 @@ class ProductSelector:
 
     def send(self):
         logging.info('Opensearch request: {}'.format(self.request))
-        try:
-            _response = requests.get(
-                open_data_hub_url,
-                params=self.request, auth=(opendatahub_user,
-                                           opendatahub_password))
-            if _response.status_code == 200:
-                self.response = _response
-            else:
-                self.response = None
-        except IOError:
-            pass
+        _response = requests.get(
+            open_data_hub_url,
+            params=self.request, auth=(opendatahub_user,
+                                       opendatahub_password))
+        if _response.status_code == 200:
+            self.response = _response
+        else:
+            raise IOError("No valid response: _response.status_code != 200")
 
     def select(self):
         # TODO: Was, wenn bei "send" None herauskommt?
-        self._tree = ET.fromstring(self.response.text)
-        ns = {'atom': 'http://www.w3.org/2005/Atom'}
-        self.selected_product = self._tree.find("./atom:entry", ns)
+        if self.response:
+            self._tree = ET.fromstring(self.response.text)
+            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+            self.selected_product = self._tree.find("./atom:entry", ns)
+        else:
+            raise ValueError("Nothing to select: self.response = None")
+
