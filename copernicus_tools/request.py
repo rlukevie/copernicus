@@ -1,7 +1,7 @@
 import requests
 import xml.etree.ElementTree as ET
 
-from factorytools.settings import *
+from copernicus_tools.settings import *
 
 
 class ProductSelector:

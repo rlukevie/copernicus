@@ -1,6 +1,6 @@
 import shelve
 
-from factorytools.settings import *
+from copernicus_tools.settings import *
 
 
 class Shelve:

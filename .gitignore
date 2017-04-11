@@ -5,6 +5,7 @@ test.py
 downloads/
 etc/
 img/
+product_lab_output/
 SAFE/
 config/credentials.cfg
 log/

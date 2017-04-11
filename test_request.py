@@ -1,5 +1,5 @@
 import pytest
-from factorytools.request import ProductSelector, SelectorQueue
+from copernicus_tools.request import ProductSelector, SelectorQueue
 
 
 class TestRequest:

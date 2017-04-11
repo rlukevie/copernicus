@@ -5,7 +5,10 @@ import os
 
 # Credentials
 credentials = ConfigParser.ConfigParser()
-credentials.read("./config/credentials.cfg")
+if 'copernicus' not in os.getcwd():
+    credentials.read("./copernicus/config/credentials.cfg")
+else:
+    credentials.read("./config/credentials.cfg")
 opendatahub_user = credentials.get("opendatahub", "user")
 opendatahub_password = credentials.get("opendatahub", "pw")
 email_user = credentials.get("email", "user")
@@ -15,13 +18,17 @@ email_port = credentials.get("email", "port")
 
 # Directories
 configuration = ConfigParser.ConfigParser()
-configuration.read("./config/conf.cfg")
+if 'copernicus' not in os.getcwd():
+    configuration.read("./copernicus/config/conf.cfg")
+else:
+    configuration.read("./config/conf.cfg")
 base_directory = configuration.get("directories", "base")
 product_download_directory = os.path.join(base_directory, 'downloads')
 product_data_directory = os.path.join(base_directory, 'SAFE')
 log_directory = os.path.join(base_directory, 'log')
 shelve_directory = os.path.join(base_directory, 'etc')
-image_output_directory = os.path.join(base_directory, 'img')
+product_lab_output_directory = os.path.join(base_directory,
+                                            'product_lab_output')
 
 # Shelve Names
 downloaded_products_shelve = 'downloaded_products'

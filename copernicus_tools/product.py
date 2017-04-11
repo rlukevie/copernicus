@@ -3,7 +3,7 @@ import zipfile
 
 import requests
 
-from factorytools.settings import *
+from copernicus_tools.settings import *
 
 
 class Product(object):
@@ -111,3 +111,37 @@ class FactoryProduct(Product):
                     self.title, l1c_path))
         except IOError:
             return
+
+
+class LabProduct:
+    instances = []
+
+    def __init__(self, factory_product):
+        self.__class__.instances.append(self)
+        self.title = factory_product.level_2a_name
+        self._metadata_xml = ET.parse(
+            os.path.join(product_data_directory,
+                         self.title) + 'MTD_MSIL2A.xml')
+        ns = {'atom': 'http://www.w3.org/2005/Atom',
+              'n1': 'https://psd-14.sentinel2.eo.esa.int/'
+                    'PSD/User_Product_Level-2A.xsd'}
+
+        granules = self._metadata_xml.findall(
+            'n1:General_Info/L2A_Product_Info/L2A_Product_Organisation/'
+            'Granule_List/Granule', ns)
+        self.image_files = []
+        for granule in granules:
+            image_elements = granule.findall('IMAGE_FILE_2A')
+            for image_element in image_elements:
+                self.image_files.append(image_element.text)
+
+        self.images_60m = {}
+        bands = ['B01', 'B02', 'B03', 'B04', 'B05']  # TODO: add bands
+        for image_file in self.image_files:
+            if '_60m' in image_file:
+                for band in bands:
+                    if '_'+band+'_' in image_file:
+                        self.images_60m.setdefault(band, image_file+'.jp2')
+
+        self.lab_history = {}
+        self.preview_image_path = ''
